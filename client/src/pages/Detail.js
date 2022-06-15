@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@apollo/client";
+import { idbPromise } from "../utils/helpers";
 
-import { useStoreContext } from '../utils/GlobalState';
-import { UPDATE_PRODUCTS } from '../utils/actions';
-import { QUERY_PRODUCTS } from '../utils/queries';
-import spinner from '../assets/spinner.gif';
+import { useStoreContext } from "../utils/GlobalState";
+import { UPDATE_PRODUCTS } from "../utils/actions";
+import { QUERY_PRODUCTS } from "../utils/queries";
+import spinner from "../assets/spinner.gif";
 
 function Detail() {
   const [state, dispatch] = useStoreContext();
@@ -18,15 +19,31 @@ function Detail() {
   const { products } = state;
 
   useEffect(() => {
+    // already in global store
     if (products.length) {
       setCurrentProduct(products.find((product) => product._id === id));
-    } else if (data) {
+    }
+    // retrieved from server
+    else if (data) {
       dispatch({
         type: UPDATE_PRODUCTS,
         products: data.products,
       });
+
+      data.products.forEach((product) => {
+        idbPromise("products", "put", product);
+      });
     }
-  }, [products, data, dispatch, id]);
+    // get cache from idb
+    else if (!loading) {
+      idbPromise("products", "get").then((indexedProducts) => {
+        dispatch({
+          type: UPDATE_PRODUCTS,
+          products: indexedProducts,
+        });
+      });
+    }
+  }, [products, data, loading, dispatch, id]);
 
   return (
     <>
@@ -39,7 +56,7 @@ function Detail() {
           <p>{currentProduct.description}</p>
 
           <p>
-            <strong>Price:</strong>${currentProduct.price}{' '}
+            <strong>Price:</strong>${currentProduct.price}{" "}
             <button>Add to Cart</button>
             <button>Remove from Cart</button>
           </p>
