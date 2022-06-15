@@ -1,14 +1,14 @@
 import { useReducer } from "react";
 import {
   UPDATE_PRODUCTS,
+  ADD_TO_CART,
+  UPDATE_CART_QUANTITY,
+  REMOVE_FROM_CART,
+  ADD_MULTIPLE_TO_CART,
   UPDATE_CATEGORIES,
   UPDATE_CURRENT_CATEGORY,
-  ADD_TO_CART,
-  ADD_MULTIPLE_TO_CART,
-  REMOVE_FROM_CART,
-  UPDATE_CART_QUANTITY,
   CLEAR_CART,
-  TOGGLE_CART,
+  TOGGLE_CART
 } from "./actions";
 
 export const reducer = (state, action) => {
@@ -19,17 +19,6 @@ export const reducer = (state, action) => {
         products: [...action.products],
       };
 
-    case UPDATE_CATEGORIES:
-      return {
-        ...state,
-        categories: [...action.categories],
-      };
-
-    case UPDATE_CURRENT_CATEGORY:
-      return {
-        ...state,
-        currentCategory: action.currentCategory,
-      };
     case ADD_TO_CART:
       return {
         ...state,
@@ -42,41 +31,54 @@ export const reducer = (state, action) => {
         ...state,
         cart: [...state.cart, ...action.products],
       };
+
+    case UPDATE_CART_QUANTITY:
+      return {
+        ...state,
+        cartOpen: true,
+        cart: state.cart.map(product => {
+          if (action._id === product._id) {
+            product.purchaseQuantity = action.purchaseQuantity
+          }
+          return product
+        })
+      };
+
     case REMOVE_FROM_CART:
-      let newState = state.cart.filter((product) => {
+      let newState = state.cart.filter(product => {
         return product._id !== action._id;
       });
 
       return {
         ...state,
         cartOpen: newState.length > 0,
-        cart: newState,
-      };
-
-    case UPDATE_CART_QUANTITY:
-      return {
-        ...state,
-        cartOpen: true,
-        cart: state.cart.map((product) => {
-          if (action._id === product._id) {
-            product.purchaseQuantity = action.purchaseQuantity;
-          }
-          return product;
-        }),
+        cart: newState
       };
 
     case CLEAR_CART:
       return {
         ...state,
         cartOpen: false,
-        cart: [],
+        cart: []
       };
 
     case TOGGLE_CART:
       return {
         ...state,
-        cartOpen: !state.cartOpen,
+        cartOpen: !state.cartOpen
       };
+
+    case UPDATE_CATEGORIES:
+      return {
+        ...state,
+        categories: [...action.categories],
+      };
+
+    case UPDATE_CURRENT_CATEGORY:
+      return {
+        ...state,
+        currentCategory: action.currentCategory
+      }
 
     default:
       return state;
@@ -84,5 +86,5 @@ export const reducer = (state, action) => {
 };
 
 export function useProductReducer(initialState) {
-  return useReducer(reducer, initialState);
+  return useReducer(reducer, initialState)
 }
